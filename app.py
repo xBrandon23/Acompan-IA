@@ -304,12 +304,27 @@ def crear_intervencion():
     datos = request.get_json()
     
     from modelos.base_datos import Intervencion
+    from datetime import datetime
+    
+    # Convertir el string de fecha a objeto datetime
+    fecha_str = datos.get('fecha_programada')
+    fecha_prog = None
+    if fecha_str:
+        try:
+            fecha_prog = datetime.fromisoformat(fecha_str)
+        except ValueError:
+            # Por si el formato es solo fecha o diferente
+            try:
+                fecha_prog = datetime.strptime(fecha_str, "%Y-%m-%dT%H:%M")
+            except:
+                pass
+                
     intervencion = Intervencion(
         estudiante_id=datos.get('estudiante_id'),
         profesor_id=profesor.id,
         tipo_intervencion=datos.get('tipo'),
         descripcion=datos.get('descripcion'),
-        fecha_programada=datos.get('fecha_programada')
+        fecha_programada=fecha_prog
     )
     
     db.session.add(intervencion)

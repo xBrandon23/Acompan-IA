@@ -3,19 +3,21 @@
    ======================================== */
 
 :root {
-    --primary-color: #667eea;
-    --secondary-color: #764ba2;
-    --success-color: #27ae60;
-    --danger-color: #e74c3c;
-    --warning-color: #f39c12;
-    --info-color: #3498db;
+    --primary-color: #8ecae6;    /* azul celeste */
+    --secondary-color: #e0b0ff;  /* lavanda */
+    --success-color: #a3e4d7;    /* verde menta */
+    --danger-color: #ffc2c2;     /* rojo pastel */
+    --warning-color: #ffe89e;    /* amarillo beige */
+    --info-color: #b0c4de;       /* gris azulado / claro */
+    --bg-color: #aee1f6;         /* azul muy claro pastel */
+    --beige: #f5f5dc;            /* beige */
 }
 
 /* ========== GENERAL ========== */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f5f7fa;
-    color: #333;
+    background-color: var(--bg-color);
+    color: #4a4a4a;
 }
 
 html, body {
@@ -73,21 +75,25 @@ main {
 .btn-primary {
     background-color: var(--primary-color);
     border-color: var(--primary-color);
+    color: #333;
 }
 
 .btn-primary:hover {
-    background-color: #5568d3;
-    border-color: #5568d3;
+    background-color: #6eb7d6;
+    border-color: #6eb7d6;
+    color: #fff;
 }
 
 .btn-success {
     background-color: var(--success-color);
     border-color: var(--success-color);
+    color: #333;
 }
 
 .btn-success:hover {
-    background-color: #229954;
-    border-color: #229954;
+    background-color: #8ed6c7;
+    border-color: #8ed6c7;
+    color: #333;
 }
 
 /* ========== TABLES ========== */
@@ -106,7 +112,7 @@ main {
 }
 
 .table tbody tr:hover {
-    background-color: #f5f7fa;
+    background-color: var(--beige);
 }
 
 /* ========== FORMS ========== */
@@ -132,12 +138,13 @@ main {
 }
 
 .progress-bar {
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     font-size: 0.85rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: #333;
+    font-weight: 500;
 }
 
 /* ========== ALERTS ========== */
