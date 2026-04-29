@@ -129,6 +129,9 @@ class Asistencia(db.Model):
     presente = db.Column(db.Boolean, default=True)
     periodo = db.Column(db.String(20), nullable=False)
     
+    # Relación con Asignatura
+    asignatura = db.relationship('Asignatura', backref='asistencias', lazy=True)
+    
     __table_args__ = (db.UniqueConstraint('estudiante_id', 'asignatura_id', 'fecha', name='uq_asistencia'),)
     
     def __repr__(self):
