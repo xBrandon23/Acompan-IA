@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}Chat Tutor IA - Acompan-IA{% endblock %}
+
+{% block content %}
+<div class="row h-100">
+    <div class="col-lg-8 mx-auto">
+        <div class="card border-0 shadow-sm" style="height: 80vh; display: flex; flex-direction: column;">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-robot"></i> Chat con Tutor IA
+                </h5>
+                <small class="text-light">Realiza preguntas sobre tu progreso académico y recibe recomendaciones personalizadas</small>
+            </div>
+
+            <!-- Chat Messages -->
+            <div class="card-body overflow-auto flex-grow-1" id="chatMessages" style="background-color: #f8f9fa;">
+                <div class="text-center text-muted py-5">
+                    <i class="fas fa-comments fa-3x mb-3" style="opacity: 0.3;"></i>
+                    <p>Hola, soy tu Tutor IA. ¿En qué puedo ayudarte hoy?</p>
+                </div>
+            </div>
+
+            <!-- Chat Input -->
+            <div class="card-footer bg-light border-top">
+                <form id="chatForm" onsubmit="enviarMensaje(event)">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="mensajeInput" placeholder="Escribe tu pregunta aquí..." required>
+                        <button class="btn btn-primary" type="submit" id="enviarBtn">
+                            <i class="fas fa-paper-plane"></i> Enviar
+                        </button>
+                    </div>
+                    <small class="text-muted mt-2 d-block">
+                        💡 Ejemplos: "¿Cómo puedo mejorar mi promedio?", "Tengo dudas sobre las tareas", "Siento mucho estrés"
+                    </small>
+                </form>
+            </div>
+        </div>
+
+        <!-- Información adicional -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm bg-light">
+                    <div class="card-body">
+                        <h6 class="card-title"><i class="fas fa-lightbulb text-warning"></i> Tips para mejores respuestas</h6>
+                        <ul class="small mb-0">
+                            <li>Sé específico en tu pregunta</li>
+                            <li>Menciona las asignaturas que te preocupan</li>
+                            <li>Comparte cómo te sientes académicamente</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm bg-light">
+                    <div class="card-body">
+                        <h6 class="card-title"><i class="fas fa-shield-alt text-info"></i> Privacidad garantizada</h6>
+                        <p class="small mb-0">
+                            Tus conversaciones son confidenciales. Solo tu profesor y consejero pueden verlas si lo necesitan para apoyarte.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .chat-message {
+        margin-bottom: 15px;
+    }
+    .chat-message.estudiante {
+        display: flex;
+        justify-content: flex-end;
+    }
+    .chat-message.ia {
+        display: flex;
+        justify-content: flex-start;
+    }
+    .message-content {
+        max-width: 70%;
+        padding: 12px 16px;
+        border-radius: 10px;
+        word-wrap: break-word;
+    }
+    .chat-message.estudiante .message-content {
+        background-color: #667eea;
+        color: white;
+    }
+    .chat-message.ia .message-content {
+        background-color: white;
+        color: #333;
+        border: 1px solid #e0e0e0;
+    }
+    .message-time {
+        font-size: 0.75rem;
+        color: #999;
+        margin-top: 5px;
+    }
+    .sentiment-badge {
+        display: inline-block;
+        margin-top: 8px;
+        font-size: 0.75rem;
+    }
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function enviarMensaje(event) {
+    event.preventDefault();
+    
+    const mensaje = document.getElementById('mensajeInput').value;
+    const chatMessages = document.getElementById('chatMessages');
+    const enviarBtn = document.getElementById('enviarBtn');
+    
+    if (!mensaje.trim()) return;
+    
+    // Mostrar mensaje del estudiante
+    const mensajeEstudiante = document.createElement('div');
+    mensajeEstudiante.className = 'chat-message estudiante';
+    mensajeEstudiante.innerHTML = `
+        <div>
+            <div class="message-content">${mensaje}</div>
+            <div class="message-time text-end">Ahora</div>
+        </div>
+    `;
+    chatMessages.appendChild(mensajeEstudiante);
+    
+    // Limpiar input
+    document.getElementById('mensajeInput').value = '';
+    
+    // Deshabilitar botón
+    enviarBtn.disabled = true;
+    
+    // Enviar al servidor
+    fetch('/api/chat/enviar', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ mensaje: mensaje })
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Mostrar respuesta de IA
+        const mensajeIA = document.createElement('div');
+        mensajeIA.className = 'chat-message ia';
+        let sentimentoHTML = '';
+        if (data.sentimiento && data.sentimiento !== 'neutro') {
+            const emojiSentimiento = {
+                'alegría': '😊',
+                'tristeza': '😢',
+                'frustración': '😤',
+                'ansiedad': '😰',
+                'motivación': '🚀',
+                'desesperanza': '😞',
+                'confusión': '🤔'
+            };
+            sentimentoHTML = `<span class="sentiment-badge">${emojiSentimiento[data.sentimiento] || ''} ${data.sentimiento}</span>`;
+        }
+        
+        mensajeIA.innerHTML = `
+            <div>
+                <div class="message-content">${data.respuesta}${sentimentoHTML}</div>
+                <div class="message-time">Tutor IA</div>
+            </div>
+        `;
+        chatMessages.appendChild(mensajeIA);
+        
+        // Scroll al final
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        const mensajeError = document.createElement('div');
+        mensajeError.className = 'chat-message ia';
+        mensajeError.innerHTML = `
+            <div>
+                <div class="message-content text-danger">Error al enviar mensaje. Intenta de nuevo.</div>
+            </div>
+        `;
+        chatMessages.appendChild(mensajeError);
+    })
+    .finally(() => {
+        enviarBtn.disabled = false;
+        document.getElementById('mensajeInput').focus();
+    });
+}
+
+// Scroll automático al cargar
+window.addEventListener('load', () => {
+    const chatMessages = document.getElementById('chatMessages');
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+});
+</script>
+{% endblock %}

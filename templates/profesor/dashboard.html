@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Profesor - Acompan-IA{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2><i class="fas fa-chart-line"></i> Dashboard de Monitoreo</h2>
+        <p class="text-muted">Panel de control para identificar y atender a estudiantes en riesgo de deserción.</p>
+    </div>
+</div>
+
+<!-- KPIs Principales -->
+<div class="row mb-4">
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body">
+                <div style="font-size: 2rem; color: #e74c3c;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h5 class="card-title mt-2">Alumnos en Riesgo</h5>
+                <p class="display-5 text-danger">{{ kpi.alumnos_en_riesgo if kpi else 0 }}</p>
+                <small class="text-muted">Requieren intervención</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body">
+                <div style="font-size: 2rem; color: #f39c12;">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <h5 class="card-title mt-2">Alertas Nuevas</h5>
+                <p class="display-5 text-warning">{{ kpi.alertas_nuevas if kpi else 0 }}</p>
+                <small class="text-muted">Notificaciones activas</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body">
+                <div style="font-size: 2rem; color: #9b59b6;">
+                    <i class="fas fa-book"></i>
+                </div>
+                <h5 class="card-title mt-2">Materias Críticas</h5>
+                <p class="display-5 text-primary">{{ kpi.materias_criticas if kpi else 0 }}</p>
+                <small class="text-muted">Con bajo desempeño</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body">
+                <div style="font-size: 2rem; color: #27ae60;">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <h5 class="card-title mt-2">Promedio General</h5>
+                <p class="display-5 text-success">{{ "%.2f"|format(kpi.promedio_academico_general) if kpi else "N/A" }}</p>
+                <small class="text-muted">Todos los estudiantes</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráficos -->
+<div class="row mb-4">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Distribución de Riesgo</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="chartRiesgo"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-line"></i> Tasa de Deserción</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="chartDesercion"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Acciones Rápidas -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-bolt"></i> Acciones Rápidas</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('estudiantes_profesor') }}" class="btn btn-primary w-100" style="height: 80px; display: flex; align-items: center; justify-content: center;">
+                            <div class="text-center">
+                                <i class="fas fa-users fa-2x mb-2"></i><br>
+                                <small>Ver Estudiantes</small>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('intervenciones_profesor') }}" class="btn btn-warning w-100" style="height: 80px; display: flex; align-items: center; justify-content: center;">
+                            <div class="text-center">
+                                <i class="fas fa-handshake fa-2x mb-2"></i><br>
+                                <small>Intervenciones</small>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('dashboard_profesor') }}" class="btn btn-info w-100" style="height: 80px; display: flex; align-items: center; justify-content: center;">
+                            <div class="text-center">
+                                <i class="fas fa-redo fa-2x mb-2"></i><br>
+                                <small>Actualizar</small>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('logout') }}" class="btn btn-danger w-100" style="height: 80px; display: flex; align-items: center; justify-content: center;">
+                            <div class="text-center">
+                                <i class="fas fa-sign-out-alt fa-2x mb-2"></i><br>
+                                <small>Cerrar Sesión</small>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Gráfico de Distribución de Riesgo
+const ctxRiesgo = document.getElementById('chartRiesgo').getContext('2d');
+new Chart(ctxRiesgo, {
+    type: 'doughnut',
+    data: {
+        labels: ['Bajo', 'Medio', 'Alto', 'Crítico'],
+        datasets: [{
+            data: [60, 20, 15, 5],
+            backgroundColor: ['#27ae60', '#f39c12', '#e74c3c', '#8b0000'],
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Gráfico de Tasa de Deserción
+const ctxDesercion = document.getElementById('chartDesercion').getContext('2d');
+new Chart(ctxDesercion, {
+    type: 'line',
+    data: {
+        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+        datasets: [{
+            label: 'Tasa de Deserción (%)',
+            data: [2, 2.5, 3, 2.8, 3.2, 2.9],
+            borderColor: '#667eea',
+            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'top'
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return value + '%';
+                    }
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

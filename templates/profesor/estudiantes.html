@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}Estudiantes - Acompan-IA{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2><i class="fas fa-users"></i> Lista de Estudiantes</h2>
+        <p class="text-muted">Monitorea a tus estudiantes y detecta señales de deserción</p>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('estudiantes_profesor') }}" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Carrera</label>
+                <input type="text" name="carrera" class="form-control" placeholder="Ej: Ingeniería">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Semestre</label>
+                <select name="semestre" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="1">1°</option>
+                    <option value="2">2°</option>
+                    <option value="3">3°</option>
+                    <option value="4">4°</option>
+                    <option value="5">5°</option>
+                    <option value="6">6°</option>
+                    <option value="7">7°</option>
+                    <option value="8">8°</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Grupo</label>
+                <input type="text" name="grupo" class="form-control" placeholder="Ej: A, B, C">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Riesgo</label>
+                <select name="riesgo" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="bajo">Bajo</option>
+                    <option value="medio">Medio</option>
+                    <option value="alto">Alto</option>
+                    <option value="critico">Crítico</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search"></i> Filtrar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tabla de Estudiantes -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-list"></i> Estudiantes ({{ estudiantes|length }})</h5>
+    </div>
+    <div class="card-body p-0">
+        {% if estudiantes %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Matrícula</th>
+                            <th>Nombre</th>
+                            <th>Carrera</th>
+                            <th>Semestre</th>
+                            <th>Promedio</th>
+                            <th>Asistencia</th>
+                            <th>Nivel de Riesgo</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for estudiante in estudiantes %}
+                            <tr>
+                                <td><strong>{{ estudiante.matricula }}</strong></td>
+                                <td>{{ estudiante.usuario_est.nombre }} {{ estudiante.usuario_est.apellido }}</td>
+                                <td>{{ estudiante.carrera }}</td>
+                                <td>{{ estudiante.semestre }}°</td>
+                                <td>
+                                    <span class="badge bg-{% if estudiante.promedio_academico >= 3.5 %}success{% elif estudiante.promedio_academico >= 3 %}warning{% else %}danger{% endif %}">
+                                        {{ "%.2f"|format(estudiante.promedio_academico) }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar {% if estudiante.asistencia_porcentaje >= 80 %}bg-success{% elif estudiante.asistencia_porcentaje >= 70 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                             style="width: {{ estudiante.asistencia_porcentaje }}%">
+                                            {{ "%.0f"|format(estudiante.asistencia_porcentaje) }}%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if estudiante.nivel_riesgo == 'bajo' %}
+                                        <span class="badge bg-success">Bajo</span>
+                                    {% elif estudiante.nivel_riesgo == 'medio' %}
+                                        <span class="badge bg-warning">Medio</span>
+                                    {% elif estudiante.nivel_riesgo == 'alto' %}
+                                        <span class="badge bg-danger">Alto</span>
+                                    {% elif estudiante.nivel_riesgo == 'critico' %}
+                                        <span class="badge bg-dark">Crítico</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('perfil_alumno_profesor', estudiante_id=estudiante.id) }}" 
+                                           class="btn btn-sm btn-info" title="Ver perfil">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <button class="btn btn-sm btn-warning" onclick="abrirModalIntervention({{ estudiante.id }})" title="Nueva intervención">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info m-3 mb-0">
+                <i class="fas fa-info-circle"></i> No hay estudiantes que coincidan con los filtros seleccionados.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal para nueva intervención -->
+<div class="modal fade" id="modalIntervention" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title"><i class="fas fa-plus-circle"></i> Nueva Intervención</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formIntervention" onsubmit="enviarIntervention(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="estudianteId" name="estudiante_id">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de Intervención</label>
+                        <select class="form-select" name="tipo" required>
+                            <option value="">Selecciona...</option>
+                            <option value="llamada">Llamada Telefónica</option>
+                            <option value="cita">Cita Presencial</option>
+                            <option value="canalizacion">Canalización a Servicios</option>
+                            <option value="asesoria">Asesoría Académica</option>
+                            <option value="otra">Otra</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <textarea class="form-control" name="descripcion" rows="3" placeholder="Describe la intervención..." required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Fecha Programada</label>
+                        <input type="datetime-local" class="form-control" name="fecha_programada" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-save"></i> Guardar Intervención
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const modalIntervention = new bootstrap.Modal(document.getElementById('modalIntervention'));
+
+function abrirModalIntervention(estudianteId) {
+    document.getElementById('estudianteId').value = estudianteId;
+    document.getElementById('formIntervention').reset();
+    modalIntervention.show();
+}
+
+function enviarIntervention(event) {
+    event.preventDefault();
+    
+    const formData = new FormData(document.getElementById('formIntervention'));
+    const datos = {
+        estudiante_id: parseInt(formData.get('estudiante_id')),
+        tipo: formData.get('tipo'),
+        descripcion: formData.get('descripcion'),
+        fecha_programada: formData.get('fecha_programada')
+    };
+    
+    fetch('/api/intervenciones/crear', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(datos)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Intervención registrada correctamente');
+            modalIntervention.hide();
+            location.reload();
+        } else {
+            alert('Error al registrar la intervención');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al enviar la solicitud');
+    });
+}
+</script>
+{% endblock %}

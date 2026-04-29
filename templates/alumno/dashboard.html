@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Acompan-IA{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2><i class="fas fa-chart-line"></i> Mi Dashboard</h2>
+        <p class="text-muted">Bienvenido, {{ usuario.nombre }}. Aquí puedes ver tu progreso académico.</p>
+    </div>
+</div>
+
+<!-- KPIs -->
+<div class="row mb-4">
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body">
+                <div style="font-size: 2rem; color: #667eea;">
+                    <i class="fas fa-star"></i>
+                </div>
+                <h5 class="card-title mt-2">Promedio</h5>
+                <p class="display-6 text-primary">{{ "%.2f"|format(estudiante.promedio_academico) }}</p>
+                <small class="text-muted">De 5.0</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body">
+                <div style="font-size: 2rem; color: #f39c12;">
+                    <i class="fas fa-user-check"></i>
+                </div>
+                <h5 class="card-title mt-2">Asistencia</h5>
+                <p class="display-6 text-warning">{{ "%.1f"|format(estudiante.asistencia_porcentaje) }}%</p>
+                <small class="text-muted">Este período</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body">
+                <div style="font-size: 2rem;">
+                    {% if estudiante.nivel_riesgo == 'bajo' %}
+                        <i class="fas fa-smile text-success"></i>
+                    {% elif estudiante.nivel_riesgo == 'medio' %}
+                        <i class="fas fa-meh text-warning"></i>
+                    {% else %}
+                        <i class="fas fa-frown text-danger"></i>
+                    {% endif %}
+                </div>
+                <h5 class="card-title mt-2">Nivel de Riesgo</h5>
+                <p class="display-6">
+                    <span class="badge bg-{% if estudiante.nivel_riesgo == 'bajo' %}success{% elif estudiante.nivel_riesgo == 'medio' %}warning{% else %}danger{% endif %}">
+                        {{ estudiante.nivel_riesgo|upper }}
+                    </span>
+                </p>
+                <small class="text-muted">Evaluación actualizada</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body">
+                <div style="font-size: 2rem; color: #27ae60;">
+                    <i class="fas fa-lightbulb"></i>
+                </div>
+                <h5 class="card-title mt-2">Recomendaciones</h5>
+                <p class="display-6">{{ recomendaciones|length }}</p>
+                <small class="text-muted">Activas para ti</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recomendaciones Académicas -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-lightbulb"></i> Recomendaciones Académicas</h5>
+            </div>
+            <div class="card-body">
+                {% if recomendaciones %}
+                    <div class="list-group list-group-flush">
+                        {% for recom in recomendaciones %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">
+                                            <span class="badge bg-{% if recom.prioridad == 'crítica' %}danger{% elif recom.prioridad == 'alta' %}warning{% else %}info{% endif %}">
+                                                {{ recom.prioridad|upper }}
+                                            </span>
+                                            {{ recom.tipo|title }}
+                                        </h6>
+                                        <p class="mb-0 text-muted">{{ recom.contenido }}</p>
+                                    </div>
+                                    <small class="text-muted">{{ recom.fecha_generacion.strftime('%d/%m/%Y') }}</small>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info" role="alert">
+                        <i class="fas fa-info-circle"></i> ¡Buen trabajo! No hay recomendaciones urgentes en este momento.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Información Personal -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="fas fa-user"></i> Mi Información</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-5">Carrera:</dt>
+                    <dd class="col-sm-7">{{ estudiante.carrera }}</dd>
+
+                    <dt class="col-sm-5">Semestre:</dt>
+                    <dd class="col-sm-7">{{ estudiante.semestre }}°</dd>
+
+                    <dt class="col-sm-5">Matrícula:</dt>
+                    <dd class="col-sm-7">{{ estudiante.matricula }}</dd>
+
+                    <dt class="col-sm-5">Email:</dt>
+                    <dd class="col-sm-7">{{ usuario.email }}</dd>
+                </dl>
+
+                <div class="mt-3">
+                    <a href="{{ url_for('perfil_alumno') }}" class="btn btn-primary btn-sm w-100">
+                        <i class="fas fa-edit"></i> Ver Mi Perfil Completo
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Acciones Rápidas -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-bolt"></i> Acciones Rápidas</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <a href="{{ url_for('chat_alumno') }}" class="btn btn-primary w-100" style="height: 80px; display: flex; align-items: center; justify-content: center;">
+                            <div class="text-center">
+                                <i class="fas fa-comments fa-2x mb-2"></i><br>
+                                <small>Chat con Tutor IA</small>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <a href="{{ url_for('perfil_alumno') }}" class="btn btn-success w-100" style="height: 80px; display: flex; align-items: center; justify-content: center;">
+                            <div class="text-center">
+                                <i class="fas fa-book fa-2x mb-2"></i><br>
+                                <small>Historial Académico</small>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <a href="{{ url_for('logout') }}" class="btn btn-danger w-100" style="height: 80px; display: flex; align-items: center; justify-content: center;">
+                            <div class="text-center">
+                                <i class="fas fa-sign-out-alt fa-2x mb-2"></i><br>
+                                <small>Cerrar Sesión</small>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Puedes agregar lógica adicional aquí si es necesario
+</script>
+{% endblock %}

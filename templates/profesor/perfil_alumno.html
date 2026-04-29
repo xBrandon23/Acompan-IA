@@ -1,0 +1,353 @@
+{% extends "base.html" %}
+
+{% block title %}Perfil Alumno - Acompan-IA{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <a href="{{ url_for('estudiantes_profesor') }}" class="btn btn-sm btn-outline-primary">
+            <i class="fas fa-arrow-left"></i> Volver a Estudiantes
+        </a>
+        <h2 class="mt-3"><i class="fas fa-user-circle"></i> {{ estudiante.usuario_est.nombre }} {{ estudiante.usuario_est.apellido }}</h2>
+        <p class="text-muted">{{ estudiante.matricula }} | {{ estudiante.carrera }} | Semestre {{ estudiante.semestre }}°</p>
+    </div>
+</div>
+
+<!-- Información General -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body text-center">
+                <i class="fas fa-user-circle" style="font-size: 3rem; color: #667eea;"></i>
+                <h5 class="mt-3">{{ estudiante.usuario_est.nombre }}</h5>
+                <p class="text-muted">{{ estudiante.usuario_est.email }}</p>
+                <hr>
+                <dl class="text-start">
+                    <dt>Email:</dt>
+                    <dd>{{ estudiante.usuario_est.email }}</dd>
+                    <dt>Institución:</dt>
+                    <dd>{{ estudiante.usuario_est.institucion }}</dd>
+                    <dt>Grupo:</dt>
+                    <dd>{{ estudiante.grupo or 'N/A' }}</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <!-- Indicadores de Riesgo -->
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Indicadores de Riesgo</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Nivel de Riesgo</h6>
+                        <span class="badge p-2 display-6" style="background-color: {% if estudiante.nivel_riesgo == 'bajo' %}#27ae60{% elif estudiante.nivel_riesgo == 'medio' %}#f39c12{% elif estudiante.nivel_riesgo == 'alto' %}#e74c3c{% else %}#8b0000{% endif %};">
+                            {{ estudiante.nivel_riesgo|upper }}
+                        </span>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Razón del Riesgo</h6>
+                        <p>{{ estudiante.razon_riesgo or 'No especificada' }}</p>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-3">
+                        <h6>Promedio</h6>
+                        <p class="display-6">{{ "%.2f"|format(estudiante.promedio_academico) }}</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h6>Asistencia</h6>
+                        <p class="display-6">{{ "%.1f"|format(estudiante.asistencia_porcentaje) }}%</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h6>Última Evaluación</h6>
+                        <p>{{ estudiante.fecha_evaluacion.strftime('%d/%m/%Y') }}</p>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-warning btn-sm w-100" onclick="abrirModalIntervention()">
+                            <i class="fas fa-plus"></i> Nueva Intervención
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-4" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="calificaciones-tab" data-bs-toggle="tab" data-bs-target="#calificaciones" type="button" role="tab">
+            <i class="fas fa-book"></i> Calificaciones
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="asistencia-tab" data-bs-toggle="tab" data-bs-target="#asistencia" type="button" role="tab">
+            <i class="fas fa-calendar-check"></i> Asistencia
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="emociones-tab" data-bs-toggle="tab" data-bs-target="#emociones" type="button" role="tab">
+            <i class="fas fa-heart"></i> Estado Emocional
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="intervenciones-tab" data-bs-toggle="tab" data-bs-target="#intervenciones" type="button" role="tab">
+            <i class="fas fa-handshake"></i> Intervenciones
+        </button>
+    </li>
+</ul>
+
+<!-- Contenido de Tabs -->
+<div class="tab-content">
+    <!-- Calificaciones -->
+    <div class="tab-pane fade show active" id="calificaciones" role="tabpanel">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                {% if calificaciones %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Asignatura</th>
+                                    <th>Calificación</th>
+                                    <th>Estado</th>
+                                    <th>Período</th>
+                                    <th>Profesor</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cal in calificaciones %}
+                                    <tr>
+                                        <td><strong>{{ cal.asignatura.nombre }}</strong></td>
+                                        <td>
+                                            <span class="badge bg-{% if cal.calificacion >= 3.5 %}success{% elif cal.calificacion >= 3 %}warning{% else %}danger{% endif %}">
+                                                {{ "%.2f"|format(cal.calificacion) }}
+                                            </span>
+                                        </td>
+                                        <td>{{ cal.estado|title }}</td>
+                                        <td>{{ cal.periodo }}</td>
+                                        <td>{{ cal.asignatura.profesor.usuario_prof.nombre }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> No hay calificaciones registradas.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Asistencia -->
+    <div class="tab-pane fade" id="asistencia" role="tabpanel">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="alert alert-info mb-3">
+                    <strong>Resumen de Asistencia:</strong> {{ "%.1f"|format(estudiante.asistencia_porcentaje) }}%
+                </div>
+                {% if asistencias %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Asignatura</th>
+                                    <th>Fecha</th>
+                                    <th>Estado</th>
+                                    <th>Período</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for asis in asistencias|slice(20) %}
+                                    <tr>
+                                        <td>{{ asis.asignatura.nombre }}</td>
+                                        <td>{{ asis.fecha.strftime('%d/%m/%Y') }}</td>
+                                        <td>
+                                            {% if asis.presente %}
+                                                <span class="badge bg-success"><i class="fas fa-check"></i> Presente</span>
+                                            {% else %}
+                                                <span class="badge bg-danger"><i class="fas fa-times"></i> Ausente</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ asis.periodo }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> No hay registros de asistencia disponibles.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Estado Emocional -->
+    <div class="tab-pane fade" id="emociones" role="tabpanel">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="alert alert-info mb-3">
+                    <i class="fas fa-info-circle"></i> Estos sentimientos fueron detectados durante chats con el Tutor IA
+                </div>
+                {% if emociones %}
+                    <div class="list-group">
+                        {% for emo in emociones %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ emo.sentimiento|title }}</h6>
+                                        <small class="text-muted">{{ emo.contexto }}</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="progress" style="width: 100px;">
+                                            <div class="progress-bar bg-info" style="width: {{ emo.puntuacion * 100 }}%"></div>
+                                        </div>
+                                        <small class="text-muted">{{ emo.fecha_evaluacion.strftime('%d/%m/%Y') }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> No hay registros emocionales disponibles.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Intervenciones -->
+    <div class="tab-pane fade" id="intervenciones" role="tabpanel">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                {% if intervenciones %}
+                    <div class="timeline">
+                        {% for intervencion in intervenciones %}
+                            <div class="card mb-3 border-left-primary" style="border-left: 4px solid #667eea;">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h6>
+                                                {% if intervencion.tipo_intervencion == 'llamada' %}
+                                                    <i class="fas fa-phone text-info"></i> Llamada
+                                                {% elif intervencion.tipo_intervencion == 'cita' %}
+                                                    <i class="fas fa-calendar-check text-warning"></i> Cita
+                                                {% elif intervencion.tipo_intervencion == 'canalizacion' %}
+                                                    <i class="fas fa-link text-danger"></i> Canalización
+                                                {% elif intervencion.tipo_intervencion == 'asesoria' %}
+                                                    <i class="fas fa-chalkboard-user text-success"></i> Asesoría
+                                                {% endif %}
+                                            </h6>
+                                            <p>{{ intervencion.descripcion }}</p>
+                                            {% if intervencion.resultado %}
+                                                <p><strong>Resultado:</strong> {{ intervencion.resultado }}</p>
+                                            {% endif %}
+                                        </div>
+                                        <span class="badge bg-{% if intervencion.estado == 'completada' %}success{% elif intervencion.estado == 'programada' %}warning{% else %}secondary{% endif %}">
+                                            {{ intervencion.estado|title }}
+                                        </span>
+                                    </div>
+                                    <small class="text-muted">
+                                        Programada: {{ intervencion.fecha_programada.strftime('%d/%m/%Y %H:%M') }}<br>
+                                        Registrada: {{ intervencion.fecha_creacion.strftime('%d/%m/%Y') }}
+                                    </small>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> No hay intervenciones registradas para este estudiante.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para intervención -->
+<div class="modal fade" id="modalIntervention" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title"><i class="fas fa-plus-circle"></i> Nueva Intervención</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formIntervention" onsubmit="enviarIntervention(event, {{ estudiante.id }})">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de Intervención</label>
+                        <select class="form-select" name="tipo" required>
+                            <option value="">Selecciona...</option>
+                            <option value="llamada">Llamada Telefónica</option>
+                            <option value="cita">Cita Presencial</option>
+                            <option value="canalizacion">Canalización a Servicios</option>
+                            <option value="asesoria">Asesoría Académica</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <textarea class="form-control" name="descripcion" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Fecha Programada</label>
+                        <input type="datetime-local" class="form-control" name="fecha_programada" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const modalIntervention = new bootstrap.Modal(document.getElementById('modalIntervention'));
+
+function abrirModalIntervention() {
+    document.getElementById('formIntervention').reset();
+    modalIntervention.show();
+}
+
+function enviarIntervention(event, estudianteId) {
+    event.preventDefault();
+    const formData = new FormData(document.getElementById('formIntervention'));
+    
+    fetch('/api/intervenciones/crear', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            estudiante_id: estudianteId,
+            tipo: formData.get('tipo'),
+            descripcion: formData.get('descripcion'),
+            fecha_programada: formData.get('fecha_programada')
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Intervención registrada exitosamente');
+            modalIntervention.hide();
+            location.reload();
+        }
+    });
+}
+</script>
+{% endblock %}
